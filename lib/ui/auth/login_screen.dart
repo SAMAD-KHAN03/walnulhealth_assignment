@@ -1,15 +1,21 @@
+// ignore_for_file: no_leading_underscores_for_local_identifiers
+import 'package:assignment/models/user.dart';
+import 'package:assignment/providers/texteditingcontrollers_provider.dart';
+import 'package:assignment/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Login Screen
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
+  const LoginScreen({super.key});
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _LoginScreenState extends ConsumerState<LoginScreen>
     with TickerProviderStateMixin {
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
+  // final _usernameController = TextEditingController();
+  // final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
   late AnimationController _animationController;
@@ -30,12 +36,14 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   void dispose() {
-    _animationController.dispose();
+    // _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final _usernameController = ref.watch(emailControllerProvider);
+    final _passwordController = ref.watch(passwordControllerProvider);
     return Scaffold(
       body: SafeArea(
         child: FadeTransition(
@@ -57,10 +65,7 @@ class _LoginScreenState extends State<LoginScreen>
                 SizedBox(height: 8),
                 Text(
                   'Sign in to continue your habit journey',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF636E72),
-                  ),
+                  style: TextStyle(fontSize: 16, color: Color(0xFF636E72)),
                 ),
                 SizedBox(height: 60),
                 _buildTextField(
@@ -90,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                 ),
                 SizedBox(height: 30),
-                _buildLoginButton(),
+                _buildLoginButton(ref),
                 Spacer(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -168,21 +173,26 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildLoginButton() {
+  Widget _buildLoginButton(WidgetRef ref) {
     return Container(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
         onPressed: _isLoading
             ? null
-            : () {
+            : () async {
                 setState(() {
                   _isLoading = true;
                 });
                 // Simulate API call
-                Future.delayed(Duration(seconds: 2), () {
-                  Navigator.pushReplacementNamed(context, '/dashboard');
-                });
+                // Future.delayed(Duration(seconds: 2), () {
+                //   Navigator.pushReplacementNamed(context, '/dashboard');
+                // });
+                final authrepo = ref.read(authRepositoryProvider);
+                final User? user = await authrepo.login(ref);
+                if (user != null) {
+                  print(user);
+                }
               },
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF6C5CE7),

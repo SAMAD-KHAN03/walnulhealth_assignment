@@ -1,10 +1,10 @@
-import 'package:assignment/screens/login_screen.dart';
+import 'package:assignment/ui/auth/login_screen.dart';
+import 'package:assignment/ui/auth/signup_screen.dart';
 import 'package:flutter/material.dart';
-
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  runApp(HabitBuilderApp());
+  runApp(ProviderScope(child: HabitBuilderApp()));
 }
 
 class HabitBuilderApp extends StatelessWidget {
@@ -29,9 +29,8 @@ class HabitBuilderApp extends StatelessWidget {
         ),
       ),
       home: LoginScreen(),
-      routes: {
-        '/login': (context) => LoginScreen(),
-     
+      routes: {'/login': (context) => LoginScreen(),
+       '/signup': (context) => SignupScreen(),
       },
     );
   }
