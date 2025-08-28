@@ -1,7 +1,8 @@
+import 'dart:convert';
+
 import 'package:assignment/services/token_storage.dart';
 import 'package:dio/dio.dart';
 import '../models/habit.dart';
-import '../models/habit_history.dart';
 
 class HabitService {
   final Dio dio;
@@ -18,31 +19,48 @@ class HabitService {
     return list;
   }
 
-  Future<Habit> createHabit(Map<String, dynamic> payload) async {
-    final res = await dio.post('/habits', data: payload);
-    return Habit.fromJson(res.data);
+  Future<Habit> createHabit(Habit payload) async {
+    final res = await dio.post('/habits', data: payload.toJson());
+
+    // Ensure correct type
+    final data = res.data is String ? jsonDecode(res.data) : res.data;
+
+    return Habit.fromJson(data as Map<String, dynamic>);
   }
 
-  Future<Habit> completeHabit(int id) async {
-    final res = await dio.post(
-      '/habits/$id/complete',
-      data: {"completed": true},
-    );
+  Future<void> completeHabit(String habitId) async {
+    final token = await TokenStorage.getToken();
+    print("the token for the complete habit function is $token");
 
-    final r = res.data;
-    return Habit(
-      id: r['id'],
-      title: r['title'],
-      description: '', // not provided by mock response
-      category: Category.none,
-      frequency: 'Daily',
-      streak: r['streak'],
-      completedToday: r['completed_today'],
-    );
+    if (token == null) {
+      throw Exception("the token is null");
+    }
+
+    try {
+      final res = await dio.post(
+        '/habits/1/complete', // Fixed: Added /api and use habitId
+        data: {
+          "id": habitId, // Use the actual habit ID
+          "completed_today": true, // Match the API response format
+        },
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token", // Fixed: Proper Bearer token
+            "Content-Type": "application/json", // Fixed: Added content type
+          },
+        ),
+      );
+
+      final data = res.data is String ? jsonDecode(res.data) : res.data;
+      // return Habit.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      print("Error completing habit: $e");
+      rethrow;
+    }
   }
 
-  Future<HabitHistory> getHistory(int id) async {
-    final res = await dio.get('/habits/$id/history');
-    return HabitHistory.fromJson(res.data);
-  }
+  // Future<HabitHistory> getHistory(int token) async {
+  //   final res = await dio.get('/habits/$token/history');
+  //   return HabitHistory.fromJson(res.data);
+  // }
 }

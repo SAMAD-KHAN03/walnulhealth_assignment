@@ -14,12 +14,13 @@ void main() async {
   // Hive.init
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ Initialize Hive
+  //  Initialize Hive
   await Hive.initFlutter();
 
-  // ✅ Open the boxes you plan to use BEFORE runApp
+  //  Open the boxes you plan to use BEFORE runApp
   await Hive.openBox('habits'); // example
   await Hive.openBox('pending_ops'); // example (optional)FF
+  await Hive.openBox('progress'); 
   runApp(ProviderScope(child: HabitBuilderApp()));
 }
 

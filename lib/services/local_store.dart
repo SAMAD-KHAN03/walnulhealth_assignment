@@ -6,21 +6,31 @@ class LocalStore {
   static const habitsBox = 'habits';
   static const pendingBox = 'pending_ops';
 
-  // List<Habit > _habits = []; // internal cache of habits
-
   Future<void> saveHabits(List<Habit> habits) async {
     final box = Hive.box(habitsBox);
     await box.put('list', habits.map((h) => h.toJson()).toList());
     HabitCache.habits = habits; // update internal cache
   }
 
-  /// Save a single habit and update cache
+  /// Save a single habit and update cache (add or update if exists)
   Future<void> saveHabit(Habit habit) async {
-    HabitCache.habits.add(habit); // add in-memory
-    print(
-      "after adding new habit the size of habits cache is ${HabitCache.habits.length}",
-    );
-    await saveHabits(HabitCache.habits); // persist all
+    // Find index of existing habit with the same id
+    final index = HabitCache.habits.indexWhere((h) => h.id == habit.id);
+
+    if (index >= 0) {
+      // Habit exists → update
+      HabitCache.habits[index] = habit;
+      print(" Updated existing habit with id ${habit.id}");
+    } else {
+      // Habit doesn't exist → add
+      HabitCache.habits.add(habit);
+      print(" Added new habit with id ${habit.id}");
+    }
+
+    print("Current habits cache size: ${HabitCache.habits.length}");
+
+    // Persist updated list
+    await saveHabits(HabitCache.habits);
   }
 
   List<Habit> getHabits() {

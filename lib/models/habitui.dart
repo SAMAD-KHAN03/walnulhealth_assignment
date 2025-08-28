@@ -2,7 +2,7 @@ import 'package:assignment/models/habit.dart';
 import 'package:flutter/material.dart';
 
 class HabitUI {
-  final Habit habit;
+  Habit habit;
   final double progress;
   final Color color;
   final IconData icon;

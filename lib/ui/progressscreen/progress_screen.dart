@@ -1,12 +1,42 @@
 // Progress Screen
+import 'package:assignment/providers/all_habit_list_provider.dart';
+import 'package:assignment/providers/complete_list_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
-class ProgressScreen extends StatefulWidget {
+class ProgressScreen extends ConsumerStatefulWidget {
+  const ProgressScreen({super.key});
+
   @override
-  _ProgressScreenState createState() => _ProgressScreenState();
+  ConsumerState<ProgressScreen> createState() => _ProgressScreenState();
 }
 
-class _ProgressScreenState extends State<ProgressScreen> {
+bool istasktoday(WidgetRef ref, String dateToCheck) {
+  final allhabits = ref.read(allhabitProvider);
+
+  // If no habits exist, nothing is completed
+  if (allhabits.isEmpty) {
+    return false;
+  }
+
+  bool hasAnyCompletedHabit = false;
+
+  for (final habit in allhabits) {
+    // Check if this habit was completed on the given date
+    final completed = ref
+        .read(completelistprovider)
+        .getcompletehabitlist(habit.habit.id);
+
+    if (completed.contains(dateToCheck)) {
+      hasAnyCompletedHabit = true;
+      break; // Found at least one completed habit for this date
+    }
+  }
+  return hasAnyCompletedHabit;
+}
+
+class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   int _selectedMonth = DateTime.now().month;
   int _selectedYear = DateTime.now().year;
 
@@ -38,8 +68,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
               child: Column(
                 children: [
                   _buildCalendarView(),
-                  SizedBox(height: 32),
-                  _buildProgressSummary(),
                   SizedBox(height: 24),
                   _buildHabitStreaks(),
                 ],
@@ -159,19 +187,30 @@ class _ProgressScreenState extends State<ProgressScreen> {
       itemCount: 35, // 5 weeks
       itemBuilder: (context, index) {
         int day = index + 1;
-        bool isCompleted = day % 3 == 0; // Mock data
-        bool isPartial = day % 5 == 0 && !isCompleted;
+
+        // 🔹 Create the actual date for this calendar day
+        DateTime dayDate = DateTime(_selectedYear, _selectedMonth, day);
+        String dayDateString = DateFormat('yyyy-MM-dd').format(dayDate);
+
+        // 🔹 Check if this specific day is completed
+        bool isCompleted = istasktoday(
+          ref,
+          dayDateString, // Use the actual date for this day, not today's date
+        );
+
+        bool ismissed = !isCompleted;
+
+        // 🔹 Check if this day is today
         bool isToday =
             day == DateTime.now().day &&
             _selectedMonth == DateTime.now().month &&
             _selectedYear == DateTime.now().year;
-
         return Container(
           decoration: BoxDecoration(
             color: isCompleted
                 ? Color(0xFF00B894)
-                : isPartial
-                ? Color(0xFFFDCB6E)
+                : ismissed
+                ? Color(0xFFE17055)
                 : Color(0xFFF8F9FA),
             borderRadius: BorderRadius.circular(8),
             border: isToday
@@ -184,7 +223,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: isCompleted || isPartial
+                color: isCompleted || ismissed
                     ? Colors.white
                     : Color(0xFF636E72),
               ),
@@ -192,95 +231,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildProgressSummary() {
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'This Month Summary',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2D3436),
-            ),
-          ),
-          SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: _buildSummaryItem(
-                  'Completed',
-                  '24',
-                  Color(0xFF00B894),
-                  Icons.check_circle,
-                ),
-              ),
-              Expanded(
-                child: _buildSummaryItem(
-                  'Partial',
-                  '6',
-                  Color(0xFFFDCB6E),
-                  Icons.schedule,
-                ),
-              ),
-              Expanded(
-                child: _buildSummaryItem(
-                  'Missed',
-                  '4',
-                  Color(0xFFE17055),
-                  Icons.cancel,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryItem(
-    String label,
-    String value,
-    Color color,
-    IconData icon,
-  ) {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: color, size: 24),
-        ),
-        SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2D3436),
-          ),
-        ),
-        Text(label, style: TextStyle(fontSize: 12, color: Color(0xFF636E72))),
-      ],
     );
   }
 
@@ -310,10 +260,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
           ),
           SizedBox(height: 16),
-          _buildStreakItem('Morning Run', 21, Color(0xFF00B894)),
-          _buildStreakItem('Read Books', 15, Color(0xFFE17055)),
-          _buildStreakItem('Meditation', 8, Color(0xFFA29BFE)),
-          _buildStreakItem('Drink Water', 12, Color(0xFF0984E3)),
+          ...checkhabitsformonthyear(_selectedMonth, _selectedYear),
         ],
       ),
     );
@@ -379,5 +326,66 @@ class _ProgressScreenState extends State<ProgressScreen> {
       'December',
     ];
     return months[month];
+  }
+
+  List<Widget> checkhabitsformonthyear(int month, int year) {
+    final allHabitListProvider = ref.read(allhabitProvider);
+    List<Widget> habitWidgets = [];
+
+    for (final habitData in allHabitListProvider) {
+      // Get completed and missed lists for this habit
+      final completed = ref
+          .read(completelistprovider)
+          .getcompletehabitlist(habitData.habit.id);
+
+      final missed = ref
+          .read(completelistprovider)
+          .getmissinghabtilist(habitData.habit.id);
+
+      // Check if this habit has any entries for the specified month/year
+      bool hasEntriesInMonthYear = false;
+      int completedDaysInMonth = 0;
+      int missedDaysInMonth = 0;
+
+      // Check completed dates
+      for (String dateString in completed) {
+        try {
+          DateTime date = DateTime.parse(dateString);
+          if (date.month == month && date.year == year) {
+            hasEntriesInMonthYear = true;
+            completedDaysInMonth++;
+          }
+        } catch (e) {
+          // Skip invalid date strings
+          continue;
+        }
+      }
+
+      // Check missed dates
+      for (String dateString in missed) {
+        try {
+          DateTime date = DateTime.parse(dateString);
+          if (date.month == month && date.year == year) {
+            hasEntriesInMonthYear = true;
+            missedDaysInMonth++;
+          }
+        } catch (e) {
+          // Skip invalid date strings
+          continue;
+        }
+      }
+
+      // Only add to list if habit has entries in this month/year
+      if (hasEntriesInMonthYear) {
+        String habitName = habitData.habit.title;
+
+        habitWidgets.add(
+          _buildStreakItem(habitName, habitData.habit.streak, habitData.color),
+        );
+      }
+    }
+
+    return habitWidgets;
+    // Return a container with all habit widgets
   }
 }

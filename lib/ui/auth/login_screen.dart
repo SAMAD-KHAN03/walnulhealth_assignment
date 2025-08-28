@@ -2,7 +2,7 @@
 import 'package:assignment/models/user.dart';
 import 'package:assignment/providers/auth_service_repo_provider.dart';
 import 'package:assignment/providers/text_editing_controllers_provider.dart';
-import 'package:assignment/services/auth_service.dart';
+import 'package:assignment/services/token_storage.dart';
 import 'package:assignment/ui/dashboard/dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

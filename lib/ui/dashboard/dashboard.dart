@@ -1,15 +1,14 @@
 // ignore_for_file: library_private_types_in_public_api
-
-import 'package:assignment/models/habit.dart';
-import 'package:assignment/models/habitui.dart';
 import 'package:assignment/providers/all_habit_list_provider.dart';
-import 'package:assignment/providers/habit_service_repo_provider.dart';
+import 'package:assignment/providers/complete_list_provider.dart';
+import 'package:assignment/providers/local_progress_storage_class_provider.dart';
 import 'package:assignment/ui/progressscreen/progress_screen.dart';
 import 'package:assignment/ui/widgets/build_bottom_navigation.dart';
 import 'package:assignment/ui/widgets/build_habit_card.dart';
 import 'package:assignment/ui/widgets/habit_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 // Dashboard Screen
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -17,6 +16,19 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
   @override
   _DashboardScreenState createState() => _DashboardScreenState();
+}
+
+int countCompleteToday(WidgetRef ref) {
+  //this function is for counting how many tasks are marked completed today which will we done by traversing the progress of each taks from internal storage and then counting how many have todays date in their completed list
+  final allhabits = ref.read(allhabitProvider);
+  int count = 0;
+  for (final habit in allhabits) {
+    final completelist = ref.read(completelistprovider);
+    if (completelist.getcompletehabitlist(habit.habit.id).contains(DateFormat('yyyy-MM-dd').format(DateTime.now()))) {
+      count++;
+    }
+  }
+  return count;
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
@@ -28,7 +40,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(localProgressProvider).updateAllHabits(ref);
       ref.read(allhabitProvider.notifier).fetchHabits(ref);
     });
   }
@@ -116,7 +129,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildStatsCards(),
+          _buildStatsCards(ref),
           SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -156,13 +169,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildStatsCards() {
+  Widget _buildStatsCards(WidgetRef ref) {
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
             title: 'Total Habits',
-            value: '12',
+            value: ref.read(allhabitProvider).length.toString(),
             icon: Icons.track_changes,
             color: Color(0xFF00B894),
           ),
@@ -171,7 +184,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Expanded(
           child: _buildStatCard(
             title: 'Completed Today',
-            value: '8',
+            value: countCompleteToday(ref).toString(),
             icon: Icons.check_circle,
             color: Color(0xFF6C5CE7),
           ),

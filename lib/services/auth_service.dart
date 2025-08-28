@@ -1,5 +1,6 @@
 import 'package:assignment/models/user.dart';
 import 'package:assignment/providers/text_editing_controllers_provider.dart';
+import 'package:assignment/services/token_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,8 +18,7 @@ class AuthService {
     );
     if (res.statusCode == 200) {
       final token = res.data['token'] as String;
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', token);
+      await TokenStorage.saveToken(token);
       return User.fromJson(res.data['user']);
     }
     return null;

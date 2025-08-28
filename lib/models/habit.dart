@@ -36,13 +36,13 @@ String toString() {
 
   /// Convert Habit -> JSON
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'description': description,
-    'category': category.name, // save enum as string
-    'frequency': frequency,
-    'streak': streak,
-    'completed_today': completedToday,
+      'id': id,
+      'title': title,
+      'description': description,
+      'category': category.name, // save enum as string
+      'frequency': frequency,
+      'streak': streak,
+      'completed_today': completedToday,
   };
 
   Habit copyWith({int? streak, bool? completedToday}) => Habit(

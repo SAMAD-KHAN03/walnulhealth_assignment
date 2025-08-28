@@ -1,28 +1,55 @@
 import 'package:assignment/models/habit.dart';
+import 'package:assignment/models/habit_progress.dart';
 import 'package:assignment/models/habitui.dart';
-import 'package:flutter/material.dart';
+import 'package:assignment/providers/complete_list_provider.dart';
+import 'package:assignment/providers/habit_service_repo_provider.dart';
+import 'package:assignment/providers/local_progress_storage_class_provider.dart';
+import 'package:assignment/providers/local_store_provider.dart';
 
-class HabitDetailScreen extends StatefulWidget {
+import 'package:assignment/ui/widgets/habit_detail_screen_widgets/build_activityItem.dart';
+import 'package:assignment/ui/widgets/habit_detail_screen_widgets/show_complete_dialogue.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';    
+
+class HabitDetailScreen extends ConsumerStatefulWidget {
   @override
   _HabitDetailScreenState createState() => _HabitDetailScreenState();
 }
 
-class _HabitDetailScreenState extends State<HabitDetailScreen> {
+class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
+  late HabitUI habit;
+  late HabitProgress progress;
   @override
-  Widget build(BuildContext context) {
-    final habit = (ModalRoute.of(context)?.settings.arguments as Habit?) != null
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+    habit = (ModalRoute.of(context)?.settings.arguments as Habit?) != null
         ? mapHabitToUI(ModalRoute.of(context)!.settings.arguments as Habit)
         : mapHabitToUI(
             Habit(
               id: 1,
-              title: 'Morning Run',
-              description: 'Start your day with a 30-minute run',
-              category: Category.fitness,
-              frequency: 'Daily',
-              streak: 12,
-              completedToday: false,
+              title: habit.habit.title,
+              description: habit.habit.description,
+              category: habit.habit.category,
+              frequency: habit.habit.category.name,
+              streak: habit.habit.streak,
+              completedToday: habit.habit.completedToday,
             ),
           );
+
+    final completedDates = ref
+        .read(completelistprovider)
+        .getcompletehabitlist(habit.habit.id);
+    final missedDates = ref
+        .read(completelistprovider)
+        .getmissinghabtilist(habit.habit.id);
+
+    // Initialize HabitProgress object
+    progress = HabitProgress(completed: completedDates, missed: missedDates);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: habit.color,
       body: SafeArea(
@@ -94,7 +121,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                             ),
                             SizedBox(height: 8),
                             Text(
-                              habit.habit.category.toString(),
+                              habit.habit.category.name,
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.white.withOpacity(0.8),
@@ -107,17 +134,17 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                               children: [
                                 _buildStatItem(
                                   'Streak',
-                                  '${habit.habit.streak}',
+                                  '${progress.streak}',
                                   'days',
                                 ),
                                 _buildStatItem(
                                   'Progress',
-                                  '${(habit.progress * 100).toInt()}',
+                                  '${(progress.progress)}',
                                   '%',
                                 ),
                                 _buildStatItem(
                                   'Category',
-                                  habit.habit.category.toString(),
+                                  habit.habit.category.name,
                                   '',
                                 ),
                               ],
@@ -165,7 +192,33 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                                   width: double.infinity,
                                   height: 56,
                                   child: ElevatedButton(
-                                    onPressed: _showCompletionDialog,
+                                    onPressed: () async {
+                                      //updating the progress object
+                                      await ref
+                                          .watch(localProgressProvider)
+                                          .saveUpdateProgress(habit.habit.id,ref);
+                                      //updating the habit object
+                                      habit.habit = habit.habit.copyWith(
+                                        completedToday: true,
+                                        streak: progress.streak,
+                                      );
+                                      //storing updated habit object locally
+                                      await ref
+                                          .read(localStoreProvider)
+                                          .saveHabit(habit.habit);
+                                      //sending the updated object to backend
+                                      try {
+                                        await ref
+                                            .read(habitRepoProvider)
+                                            .completeHabit(
+                                              habit.habit.id.toString(),
+                                            );
+                                        print("saved the updated habit ");
+                                      } catch (e) {
+                                        print(e);
+                                      }
+                                      ShowCompleteDialogue();
+                                    },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: habit.color,
                                       shape: RoundedRectangleBorder(
@@ -275,105 +328,31 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
   Widget _buildActivityList() {
     return Column(
       children: [
-        _buildActivityItem(
-          'Completed',
-          'Today at 7:00 AM',
-          Icons.check_circle,
-          Color(0xFF00B894),
+        BuildActivityitem(
+          status: 'Completed',
+          time: 'Today at 7:00 AM',
+          icon: Icons.check_circle,
+          color: Color(0xFF00B894),
         ),
-        _buildActivityItem(
-          'Completed',
-          'Yesterday at 7:15 AM',
-          Icons.check_circle,
-          Color(0xFF00B894),
+        BuildActivityitem(
+          status: 'Completed',
+          time: 'Yesterday at 7:15 AM',
+          icon: Icons.check_circle,
+          color: Color(0xFF00B894),
         ),
-        _buildActivityItem(
-          'Missed',
-          '2 days ago',
-          Icons.cancel,
-          Color(0xFFE17055),
+        BuildActivityitem(
+          status: 'Missed',
+          time: '2 days ago',
+          icon: Icons.cancel,
+          color: Color(0xFFE17055),
         ),
-        _buildActivityItem(
-          'Completed',
-          '3 days ago at 6:45 AM',
-          Icons.check_circle,
-          Color(0xFF00B894),
+        BuildActivityitem(
+          status: 'Completed',
+          time: '3 days ago at 6:45 AM',
+          icon: Icons.check_circle,
+          color: Color(0xFF00B894),
         ),
       ],
-    );
-  }
-
-  Widget _buildActivityItem(
-    String status,
-    String time,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: color, size: 16),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  status,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2D3436),
-                  ),
-                ),
-                Text(
-                  time,
-                  style: TextStyle(fontSize: 12, color: Color(0xFF636E72)),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showCompletionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Great Job!'),
-        content: Text(
-          'You\'ve completed your habit for today. Keep up the great work!',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Continue'),
-          ),
-        ],
-      ),
     );
   }
 }

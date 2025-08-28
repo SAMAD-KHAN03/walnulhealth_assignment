@@ -3,6 +3,7 @@
 import 'dart:math';
 import 'package:assignment/models/habit.dart';
 import 'package:assignment/providers/all_habit_list_provider.dart';
+import 'package:assignment/providers/habit_service_repo_provider.dart';
 import 'package:assignment/providers/local_store_provider.dart';
 import 'package:assignment/providers/text_editing_controllers_provider.dart';
 import 'package:assignment/ui/widgets/frequency_selector.dart';
@@ -196,23 +197,36 @@ class _AddHabitBottomSheetState extends ConsumerState<AddHabitBottomSheet> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
+                      final habit = Habit(
+                        id: generateTwoDigitId(),
+                        title: _nameController.text,
+                        description: _descriptionController.text,
+                        category: _selectedCategory,
+                        frequency: ref
+                            .read(selectedfrequency.notifier)
+                            .state
+                            .name,
+                        streak: 0,
+                        completedToday: false,
+                      );
                       await ref
                           .watch(localStoreProvider)
-                          .saveHabit(
-                            Habit(
-                              id: generateTwoDigitId(),
-                              title: _nameController.text,
-                              description: _descriptionController.text,
-                              category: _selectedCategory,
-                              frequency: ref
-                                  .read(selectedfrequency.notifier)
-                                  .state
-                                  .name,
-                              streak: 0,
-                              completedToday: false,
+                          .saveHabit(habit); //saving locally
+                      try {
+                        await ref
+                            .read(habitRepoProvider)
+                            .createHabit(habit); //saving backend(mock)
+                        print("saved successfully  ");
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            duration: Duration(minutes: 1),
+                            content: Text(
+                              "some error occures in saving to backend $e",
                             ),
-                          );
-
+                          ),
+                        );
+                      }
                       ref.watch(allhabitProvider.notifier).fetchHabits(ref);
 
                       // Close bottom sheet first
