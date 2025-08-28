@@ -1,7 +1,7 @@
 // ignore_for_file: library_private_types_in_public_api, no_leading_underscores_for_local_identifiers
 
-import 'package:assignment/providers/texteditingcontrollers_provider.dart';
-import 'package:assignment/services/auth_service.dart';
+import 'package:assignment/providers/auth_service_repo_provider.dart';
+import 'package:assignment/providers/text_editing_controllers_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,7 +20,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   Widget build(BuildContext context) {
     final authRepo = ref.read(authRepositoryProvider);
     final _emailController = ref.watch(emailControllerProvider);
-    final _nameController = ref.watch(nameControllerProvider);
+    final _nameController = ref.watch(usernameController);
     final _passwordController = ref.watch(passwordControllerProvider);
     return Scaffold(
       appBar: AppBar(

@@ -1,7 +1,9 @@
 // ignore_for_file: no_leading_underscores_for_local_identifiers
 import 'package:assignment/models/user.dart';
-import 'package:assignment/providers/texteditingcontrollers_provider.dart';
+import 'package:assignment/providers/auth_service_repo_provider.dart';
+import 'package:assignment/providers/text_editing_controllers_provider.dart';
 import 'package:assignment/services/auth_service.dart';
+import 'package:assignment/ui/dashboard/dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,8 +16,6 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen>
     with TickerProviderStateMixin {
-  // final _usernameController = TextEditingController();
-  // final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
   late AnimationController _animationController;
@@ -45,80 +45,94 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final _usernameController = ref.watch(emailControllerProvider);
     final _passwordController = ref.watch(passwordControllerProvider);
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: Padding(
-            padding: EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 60),
-                Text(
-                  'Welcome Back',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D3436),
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Sign in to continue your habit journey',
-                  style: TextStyle(fontSize: 16, color: Color(0xFF636E72)),
-                ),
-                SizedBox(height: 60),
-                _buildTextField(
-                  controller: _usernameController,
-                  label: 'Username',
-                  icon: Icons.person_outline,
-                ),
-                SizedBox(height: 20),
-                _buildTextField(
-                  controller: _passwordController,
-                  label: 'Password',
-                  icon: Icons.lock_outline,
-                  isPassword: true,
-                ),
-                SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {},
-                    child: Text(
-                      'Forgot Password?',
-                      style: TextStyle(
-                        color: Color(0xFF6C5CE7),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 30),
-                _buildLoginButton(ref),
-                Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Don't have an account? ",
-                      style: TextStyle(color: Color(0xFF636E72)),
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/signup'),
-                      child: Text(
-                        'Sign Up',
-                        style: TextStyle(
-                          color: Color(0xFF6C5CE7),
-                          fontWeight: FontWeight.w600,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: EdgeInsets.all(24.0),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 60),
+                        Text(
+                          'Welcome Back',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2D3436),
+                          ),
                         ),
-                      ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Sign in to continue your habit journey',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF636E72),
+                          ),
+                        ),
+                        SizedBox(height: 60),
+                        _buildTextField(
+                          controller: _usernameController,
+                          label: 'Username',
+                          icon: Icons.person_outline,
+                        ),
+                        SizedBox(height: 20),
+                        _buildTextField(
+                          controller: _passwordController,
+                          label: 'Password',
+                          icon: Icons.lock_outline,
+                          isPassword: true,
+                        ),
+                        SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {},
+                            child: Text(
+                              'Forgot Password?',
+                              style: TextStyle(
+                                color: Color(0xFF6C5CE7),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 30),
+                        _buildLoginButton(ref),
+                        Spacer(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Don't have an account? ",
+                              style: TextStyle(color: Color(0xFF636E72)),
+                            ),
+                            GestureDetector(
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/signup'),
+                              child: Text(
+                                'Sign Up',
+                                style: TextStyle(
+                                  color: Color(0xFF6C5CE7),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 30),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-                SizedBox(height: 30),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),
@@ -192,6 +206,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 final User? user = await authrepo.login(ref);
                 if (user != null) {
                   print(user);
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => DashboardScreen()),
+                  );
                 }
               },
         style: ElevatedButton.styleFrom(
