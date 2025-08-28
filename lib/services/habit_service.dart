@@ -23,7 +23,7 @@ class HabitService {
     final res = await dio.post('/habits', data: payload.toJson());
 
     // Ensure correct type
-    final data = res.data is String ? jsonDecode(res.data) : res.data;
+      final data = res.data is String ? jsonDecode(res.data) : res.data;
 
     return Habit.fromJson(data as Map<String, dynamic>);
   }
@@ -58,9 +58,4 @@ class HabitService {
       rethrow;
     }
   }
-
-  // Future<HabitHistory> getHistory(int token) async {
-  //   final res = await dio.get('/habits/$token/history');
-  //   return HabitHistory.fromJson(res.data);
-  // }
 }

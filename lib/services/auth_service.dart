@@ -1,5 +1,7 @@
+import 'dart:convert';
+
 import 'package:assignment/models/user.dart';
-import 'package:assignment/providers/text_editing_controllers_provider.dart';
+import 'package:assignment/providers/texteditingcontroller_provider/text_editing_controllers_provider.dart';
 import 'package:assignment/services/token_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,12 +16,16 @@ class AuthService {
     final password = ref.read(passwordControllerProvider).text;
     final res = await dio.post(
       '/auth/login',
-      data: {"username": username, "password": password},
+      data: {"username": 
+      username, "password": password},
     );
+
     if (res.statusCode == 200) {
       final token = res.data['token'] as String;
+      // print(/)
       await TokenStorage.saveToken(token);
-      return User.fromJson(res.data['user']);
+      final data = res.data['user'] is String ? jsonDecode(res.data['user']) : res.data['user'];
+      return User.fromJson(data as Map<String, dynamic>);
     }
     return null;
   }

@@ -1,7 +1,8 @@
 // ignore_for_file: library_private_types_in_public_api
 import 'package:assignment/providers/all_habit_list_provider.dart';
 import 'package:assignment/providers/complete_list_provider.dart';
-import 'package:assignment/providers/local_progress_storage_class_provider.dart';
+import 'package:assignment/providers/local_storage_specific_providers/local_progress_storage_class_provider.dart';
+import 'package:assignment/ui/profile/profile_screen.dart';
 import 'package:assignment/ui/progressscreen/progress_screen.dart';
 import 'package:assignment/ui/widgets/build_bottom_navigation.dart';
 import 'package:assignment/ui/widgets/build_habit_card.dart';
@@ -24,7 +25,9 @@ int countCompleteToday(WidgetRef ref) {
   int count = 0;
   for (final habit in allhabits) {
     final completelist = ref.read(completelistprovider);
-    if (completelist.getcompletehabitlist(habit.habit.id).contains(DateFormat('yyyy-MM-dd').format(DateTime.now()))) {
+    if (completelist
+        .getcompletehabitlist(habit.habit.id)
+        .contains(DateFormat('yyyy-MM-dd').format(DateTime.now()))) {
       count++;
     }
   }
@@ -60,7 +63,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 children: [
                   _buildDashboardContent(ref),
                   ProgressScreen(),
-                  Center(child: Text('Profile Screen')),
+                  ProfileScreen(),
                 ],
               ),
             ),

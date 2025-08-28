@@ -1,4 +1,4 @@
-import 'package:assignment/providers/local_storage_habits_list_provider.dart';
+import 'package:assignment/providers/local_storage_specific_providers/local_storage_habits_list_provider.dart';
 import 'package:hive/hive.dart';
 import '../models/habit.dart';
 

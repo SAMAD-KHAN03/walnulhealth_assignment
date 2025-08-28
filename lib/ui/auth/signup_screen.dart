@@ -1,7 +1,7 @@
 // ignore_for_file: library_private_types_in_public_api, no_leading_underscores_for_local_identifiers
 
-import 'package:assignment/providers/auth_service_repo_provider.dart';
-import 'package:assignment/providers/text_editing_controllers_provider.dart';
+import 'package:assignment/providers/auth_service_specific_providers/auth_service_repo_provider.dart';
+import 'package:assignment/providers/texteditingcontroller_provider/text_editing_controllers_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

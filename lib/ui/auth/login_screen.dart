@@ -1,7 +1,7 @@
 // ignore_for_file: no_leading_underscores_for_local_identifiers
 import 'package:assignment/models/user.dart';
-import 'package:assignment/providers/auth_service_repo_provider.dart';
-import 'package:assignment/providers/text_editing_controllers_provider.dart';
+import 'package:assignment/providers/auth_service_specific_providers/auth_service_repo_provider.dart';
+import 'package:assignment/providers/texteditingcontroller_provider/text_editing_controllers_provider.dart';
 import 'package:assignment/services/token_storage.dart';
 import 'package:assignment/ui/dashboard/dashboard.dart';
 import 'package:flutter/material.dart';

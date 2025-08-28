@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/token_storage.dart';
+import '../../services/token_storage.dart';
 
 /// This provider exposes a configured Dio client everywhere in your app
 final dioProvider = Provider<Dio>((ref) {

@@ -3,8 +3,8 @@ import 'package:assignment/models/habit_progress.dart';
 import 'package:assignment/models/habitui.dart';
 import 'package:assignment/providers/complete_list_provider.dart';
 import 'package:assignment/providers/habit_service_repo_provider.dart';
-import 'package:assignment/providers/local_progress_storage_class_provider.dart';
-import 'package:assignment/providers/local_store_provider.dart';
+import 'package:assignment/providers/local_storage_specific_providers/local_progress_storage_class_provider.dart';
+import 'package:assignment/providers/local_storage_specific_providers/local_store_provider.dart';
 
 import 'package:assignment/ui/widgets/habit_detail_screen_widgets/build_activityItem.dart';
 import 'package:assignment/ui/widgets/habit_detail_screen_widgets/show_complete_dialogue.dart';

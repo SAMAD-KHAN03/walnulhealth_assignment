@@ -1,8 +1,8 @@
 import 'package:assignment/providers/auth_service_specific_providers/dio_provider.dart';
-import 'package:assignment/services/habit_service.dart';
+import 'package:assignment/services/profile/fetchprofile.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final habitRepoProvider = Provider<HabitService>((ref) {
+final profileprovider = Provider<Profile>((ref) {
   final dio = ref.watch(dioProvider);
-  return HabitService(dio);
+  return Profile(dio:dio);
 });

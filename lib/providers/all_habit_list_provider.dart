@@ -1,6 +1,6 @@
 import 'package:assignment/models/habitui.dart';
 import 'package:assignment/providers/habit_service_repo_provider.dart';
-import 'package:assignment/providers/local_store_provider.dart';
+import 'package:assignment/providers/local_storage_specific_providers/local_store_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

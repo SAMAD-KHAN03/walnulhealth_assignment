@@ -1,13 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-
-// ignore: subtype_of_sealed_class
 //not a provider actually just a function
+import 'package:hive_flutter/hive_flutter.dart';
+// ignore: subtype_of_sealed_class
 class CompletedHabitListProvider {
   static List<String> complete = [];
   static List<String> missing = [];
