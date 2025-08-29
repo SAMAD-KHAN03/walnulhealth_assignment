@@ -1,5 +1,6 @@
 import 'package:assignment/models/user_profile.dart';
-import 'package:assignment/providers/profile_specific_providers/profile_provider.dart';
+import 'package:assignment/providers/profile_specific_provider/profile_provider.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

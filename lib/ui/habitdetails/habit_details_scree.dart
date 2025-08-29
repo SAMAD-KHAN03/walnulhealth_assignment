@@ -5,15 +5,16 @@ import 'package:assignment/providers/complete_list_provider.dart';
 import 'package:assignment/providers/habit_service_repo_provider.dart';
 import 'package:assignment/providers/local_storage_specific_providers/local_progress_storage_class_provider.dart';
 import 'package:assignment/providers/local_storage_specific_providers/local_store_provider.dart';
-
 import 'package:assignment/ui/widgets/habit_detail_screen_widgets/build_activityItem.dart';
 import 'package:assignment/ui/widgets/habit_detail_screen_widgets/show_complete_dialogue.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';    
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HabitDetailScreen extends ConsumerStatefulWidget {
+  const HabitDetailScreen({super.key});
+
   @override
-  _HabitDetailScreenState createState() => _HabitDetailScreenState();
+  ConsumerState<HabitDetailScreen> createState() => _HabitDetailScreenState();
 }
 
 class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
@@ -21,7 +22,6 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
   late HabitProgress progress;
   @override
   void didChangeDependencies() {
-    // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     habit = (ModalRoute.of(context)?.settings.arguments as Habit?) != null
         ? mapHabitToUI(ModalRoute.of(context)!.settings.arguments as Habit)
@@ -43,8 +43,6 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
     final missedDates = ref
         .read(completelistprovider)
         .getmissinghabtilist(habit.habit.id);
-
-    // Initialize HabitProgress object
     progress = HabitProgress(completed: completedDates, missed: missedDates);
   }
 
@@ -167,17 +165,6 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Weekly Progress',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF2D3436),
-                                  ),
-                                ),
-                                SizedBox(height: 20),
-                                _buildWeeklyChart(),
-                                SizedBox(height: 32),
-                                Text(
                                   'Recent Activity',
                                   style: TextStyle(
                                     fontSize: 20,
@@ -196,7 +183,10 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
                                       //updating the progress object
                                       await ref
                                           .watch(localProgressProvider)
-                                          .saveUpdateProgress(habit.habit.id,ref);
+                                          .saveUpdateProgress(
+                                            habit.habit.id,
+                                            ref,
+                                          );
                                       //updating the habit object
                                       habit.habit = habit.habit.copyWith(
                                         completedToday: true,
@@ -204,12 +194,12 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
                                       );
                                       //storing updated habit object locally
                                       await ref
-                                          .read(localStoreProvider)
+                                          .watch(localStoreProvider)
                                           .saveHabit(habit.habit);
                                       //sending the updated object to backend
                                       try {
                                         await ref
-                                            .read(habitRepoProvider)
+                                            .watch(habitRepoProvider)
                                             .completeHabit(
                                               habit.habit.id.toString(),
                                             );
@@ -217,7 +207,8 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
                                       } catch (e) {
                                         print(e);
                                       }
-                                      ShowCompleteDialogue();
+                                      // FIXED: Show the dialogue properly
+                                      ShowCompleteDialogue.show(context);
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: habit.color,
@@ -271,55 +262,6 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
         Text(
           label,
           style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.8)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWeeklyChart() {
-    return Container(
-      height: 120,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          _buildChartBar('Mon', 0.8),
-          _buildChartBar('Tue', 1.0),
-          _buildChartBar('Wed', 0.6),
-          _buildChartBar('Thu', 0.9),
-          _buildChartBar('Fri', 0.7),
-          _buildChartBar('Sat', 0.4),
-          _buildChartBar('Sun', 0.2),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChartBar(String day, double progress) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Container(
-          width: 24,
-          height: 80 * progress,
-          decoration: BoxDecoration(
-            color: Color(0xFF6C5CE7),
-            borderRadius: BorderRadius.circular(12),
-            gradient: LinearGradient(
-              begin: Alignment.bottomCenter,
-              end: Alignment.topCenter,
-              colors: [Color(0xFF6C5CE7), Color(0xFF6C5CE7).withOpacity(0.6)],
-            ),
-          ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          day,
-          style: TextStyle(
-            fontSize: 12,
-            color: Color(0xFF636E72),
-            fontWeight: FontWeight.w500,
-          ),
         ),
       ],
     );

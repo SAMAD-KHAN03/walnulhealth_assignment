@@ -4,5 +4,5 @@ import 'package:assignment/services/completed_habit_list_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final completelistprovider = Provider<CompletedHabitListProvider>((ref) {
-  return CompletedHabitListProvider(  );
+  return CompletedHabitListProvider();
 });

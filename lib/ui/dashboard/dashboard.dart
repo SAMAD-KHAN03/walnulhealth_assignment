@@ -1,12 +1,14 @@
 // ignore_for_file: library_private_types_in_public_api
 import 'package:assignment/providers/all_habit_list_provider.dart';
 import 'package:assignment/providers/complete_list_provider.dart';
+import 'package:assignment/providers/habit_details_specific_provider/week_days_provider.dart';
 import 'package:assignment/providers/local_storage_specific_providers/local_progress_storage_class_provider.dart';
 import 'package:assignment/ui/profile/profile_screen.dart';
 import 'package:assignment/ui/progressscreen/progress_screen.dart';
 import 'package:assignment/ui/widgets/build_bottom_navigation.dart';
 import 'package:assignment/ui/widgets/build_habit_card.dart';
 import 'package:assignment/ui/widgets/habit_bottom_sheet.dart';
+import 'package:assignment/ui/widgets/habit_detail_screen_widgets/weekly_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -32,6 +34,25 @@ int countCompleteToday(WidgetRef ref) {
     }
   }
   return count;
+}
+
+//this method will calculate the number of total habits divided by completed on the particular day
+double counthabitsratioforchart(WidgetRef ref, int index) {
+  final allhabits = ref.read(allhabitProvider);
+  //impporting the week from today for more info read the provider file use below
+  final weekdaysfromtoday = ref.read(weekDatesProvider);
+  final daytosearchfor = weekdaysfromtoday[index];
+  int count = 0;
+  for (final habit in allhabits) {
+    final completelistofthishabit = ref
+        .read(completelistprovider)
+        .getcompletehabitlist(habit.habit.id);
+
+    if (completelistofthishabit.contains(daytosearchfor)) {
+      count++;
+    }
+  }
+  return allhabits.isEmpty ? 0 : count / allhabits.length;
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
@@ -132,6 +153,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SizedBox(height: 20),
+          Text(
+            'Your Weeky Progress!',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2D3436).withValues(alpha: 0.8),
+            ),
+          ),
+          WeeklyChart(
+            weeklyData: {
+              'Mon': counthabitsratioforchart(ref, 0),
+              'Tue': counthabitsratioforchart(ref, 1),
+              'Wed': counthabitsratioforchart(ref, 2),
+              'Thu': counthabitsratioforchart(ref, 3),
+              'Fri': counthabitsratioforchart(ref, 4),
+              'Sat': counthabitsratioforchart(ref, 5),
+              'Sun': counthabitsratioforchart(ref, 6),
+            },
+          ),
+          SizedBox(height: 20),
           _buildStatsCards(ref),
           SizedBox(height: 32),
           Row(
