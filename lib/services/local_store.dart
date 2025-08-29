@@ -7,59 +7,94 @@ class LocalStore {
   static const pendingBox = 'pending_ops';
 
   Future<void> saveHabits(List<Habit> habits) async {
-    final box = Hive.box(habitsBox);
-    await box.put('list', habits.map((h) => h.toJson()).toList());
-    HabitCache.habits = habits; // update internal cache
+    try {
+      final box = await Hive.openBox(habitsBox);
+      await box.put('list', habits.map((h) => h.toJson()).toList());
+      HabitCache.habits = habits;
+      print("✅ Saved ${habits.length} habits to local store");
+    } catch (e, st) {
+      print("❌ saveHabits failed: $e");
+      print(st);
+      rethrow;
+    }
   }
 
-  /// Save a single habit and update cache (add or update if exists)
   Future<void> saveHabit(Habit habit) async {
-    // Find index of existing habit with the same id
-    final index = HabitCache.habits.indexWhere((h) => h.id == habit.id);
+    try {
+      final index = HabitCache.habits.indexWhere((h) => h.id == habit.id);
 
-    if (index >= 0) {
-      // Habit exists → update
-      HabitCache.habits[index] = habit;
-      print(" Updated existing habit with id ${habit.id}");
-    } else {
-      // Habit doesn't exist → add
-      HabitCache.habits.add(habit);
-      print(" Added new habit with id ${habit.id}");
+      if (index >= 0) {
+        HabitCache.habits[index] = habit;
+        print("🔄 Updated existing habit with id ${habit.id}");
+      } else {
+        HabitCache.habits.add(habit);
+        print("➕ Added new habit with id ${habit.id}");
+      }
+
+      print("Current habits cache size: ${HabitCache.habits.length}");
+      await saveHabits(HabitCache.habits);
+    } catch (e, st) {
+      print("❌ saveHabit failed for id=${habit.id}: $e");
+      print(st);
+      rethrow;
     }
-
-    print("Current habits cache size: ${HabitCache.habits.length}");
-
-    // Persist updated list
-    await saveHabits(HabitCache.habits);
   }
 
   List<Habit> getHabits() {
-    final box = Hive.box(habitsBox);
-    final data = (box.get('list') as List?) ?? [];
-    HabitCache.habits = data
-        .map((e) => Habit.fromJson(Map<String, dynamic>.from(e)))
-        .toList();
-    return HabitCache.habits;
+    try {
+      final box = Hive.box(habitsBox);
+      final data = (box.get('list') as List?) ?? [];
+      HabitCache.habits = data
+          .map((e) => Habit.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+      print("✅ Loaded ${HabitCache.habits.length} habits from local store");
+      return HabitCache.habits;
+    } catch (e, st) {
+      print("❌ getHabits failed: $e");
+      print(st);
+      return []; // fail-safe fallback
+    }
   }
 
-  /// Expose cached habits (fast)
   List<Habit> get cachedHabits => List.unmodifiable(HabitCache.habits);
 
   Future<void> queueOperation(Map<String, dynamic> op) async {
-    final box = Hive.box(pendingBox);
-    final list = (box.get('ops') as List?) ?? [];
-    list.add(op);
-    await box.put('ops', list);
+    try {
+      final box = await Hive.openBox(pendingBox);
+      final list = (box.get('ops') as List?) ?? [];
+      list.add(op);
+      await box.put('ops', list);
+      print("📥 Queued operation → $op");
+    } catch (e, st) {
+      print("❌ queueOperation failed: $e");
+      print(st);
+      rethrow;
+    }
   }
 
   List<Map<String, dynamic>> getQueuedOps() {
-    final box = Hive.box(pendingBox);
-    final list = (box.get('ops') as List?) ?? [];
-    return list.map((e) => Map<String, dynamic>.from(e)).toList();
+    try {
+      final box = Hive.box(pendingBox);
+      final list = (box.get('ops') as List?) ?? [];
+      final ops = list.map((e) => Map<String, dynamic>.from(e)).toList();
+      print("📤 Retrieved ${ops.length} queued operations");
+      return ops;
+    } catch (e, st) {
+      print("❌ getQueuedOps failed: $e");
+      print(st);
+      return [];
+    }
   }
 
   Future<void> clearQueue() async {
-    final box = Hive.box(pendingBox);
-    await box.put('ops', []);
+    try {
+      final box = await Hive.openBox(pendingBox);
+      await box.put('ops', []);
+      print("🧹 Cleared queued operations");
+    } catch (e, st) {
+      print("❌ clearQueue failed: $e");
+      print(st);
+      rethrow;
+    }
   }
 }

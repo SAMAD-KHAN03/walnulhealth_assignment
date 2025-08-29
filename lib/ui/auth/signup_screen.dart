@@ -68,15 +68,30 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 isPassword: true,
               ),
               SizedBox(height: 30),
-              Container(
+              SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () async {
-                    final answer = await authRepo.signup(ref);
-                    print("the response for the signin is $answer");
-                    if (answer) {
-                      Navigator.pushReplacementNamed(context, '/dashboard');
+                    try {
+                      final answer = await authRepo.signup(ref);
+                      if (answer) {
+                        Navigator.pushReplacementNamed(context, '/dashboard');
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            duration: Duration(seconds: 2),
+                            content: Text("Signup failed. Please try again."),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          duration: Duration(seconds: 2),
+                          content: Text("Unexpected error during signup."),
+                        ),
+                      );
                     }
                   },
                   style: ElevatedButton.styleFrom(

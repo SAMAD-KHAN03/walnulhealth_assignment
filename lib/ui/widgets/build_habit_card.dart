@@ -1,7 +1,10 @@
+import 'package:assignment/models/habit_progress.dart';
 import 'package:assignment/models/habitui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-Widget buildHabitCard(HabitUI habitui, BuildContext context) {
+Widget buildHabitCard(HabitUI habitui, BuildContext context, WidgetRef ref) {
+  final progress = HabitProgress(ref: ref);
   return Container(
     margin: EdgeInsets.only(bottom: 16),
     padding: EdgeInsets.all(20),
@@ -56,7 +59,7 @@ Widget buildHabitCard(HabitUI habitui, BuildContext context) {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '${habitui.habit.streak} days',
+                '${progress.streak(habitui.habit.id)} days',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
@@ -79,13 +82,13 @@ Widget buildHabitCard(HabitUI habitui, BuildContext context) {
                   ),
                   SizedBox(height: 4),
                   LinearProgressIndicator(
-                    value: habitui.progress,
+                    value: progress.progress(habitui.habit.id),
                     backgroundColor: habitui.color.withOpacity(0.1),
                     valueColor: AlwaysStoppedAnimation(habitui.color),
                   ),
                   SizedBox(height: 4),
                   Text(
-                    '${(habitui.progress * 100).toInt()}% Complete',
+                    '${progress.progress(habitui.habit.id).toStringAsFixed(2)}% Complete',
                     style: TextStyle(fontSize: 10, color: Color(0xFF636E72)),
                   ),
                 ],

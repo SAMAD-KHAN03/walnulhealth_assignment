@@ -59,15 +59,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _initializeData();
+    });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await ref.read(localProgressProvider).updateAllHabits(ref);
-      ref.read(allhabitProvider.notifier).fetchHabits(ref);
-    });
+  Future<void> _initializeData() async {
+    ref.read(allhabitProvider.notifier).fetchHabits(ref);
+    await ref.read(localProgressProvider).updateAllHabits(ref);
   }
 
   @override
@@ -147,71 +146,73 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildDashboardContent(WidgetRef ref) {
-    final _habits = ref.watch(allhabitProvider);
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 20),
-          Text(
-            'Your Weeky Progress!',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF2D3436).withValues(alpha: 0.8),
-            ),
-          ),
-          WeeklyChart(
-            weeklyData: {
-              'Mon': counthabitsratioforchart(ref, 0),
-              'Tue': counthabitsratioforchart(ref, 1),
-              'Wed': counthabitsratioforchart(ref, 2),
-              'Thu': counthabitsratioforchart(ref, 3),
-              'Fri': counthabitsratioforchart(ref, 4),
-              'Sat': counthabitsratioforchart(ref, 5),
-              'Sun': counthabitsratioforchart(ref, 6),
-            },
-          ),
-          SizedBox(height: 20),
-          _buildStatsCards(ref),
-          SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Today\'s Habits',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2D3436),
-                ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'View All',
+    final habits = ref.watch(allhabitProvider);
+    return habits.isEmpty
+        ? Center(child: Text("No tasks added"))
+        : SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 20),
+                Text(
+                  'Your Weeky Progress!',
                   style: TextStyle(
-                    color: Color(0xFF6C5CE7),
-                    fontWeight: FontWeight.w500,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2D3436).withValues(alpha: 0.8),
                   ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount: _habits.length,
-            itemBuilder: (context, index) {
-              return buildHabitCard(_habits[index], context);
-            },
-          ),
-          SizedBox(height: 100), // Space for FAB
-        ],
-      ),
-    );
+                WeeklyChart(
+                  weeklyData: {
+                    'Mon': counthabitsratioforchart(ref, 0),
+                    'Tue': counthabitsratioforchart(ref, 1),
+                    'Wed': counthabitsratioforchart(ref, 2),
+                    'Thu': counthabitsratioforchart(ref, 3),
+                    'Fri': counthabitsratioforchart(ref, 4),
+                    'Sat': counthabitsratioforchart(ref, 5),
+                    'Sun': counthabitsratioforchart(ref, 6),
+                  },
+                ),
+                SizedBox(height: 20),
+                _buildStatsCards(ref),
+                SizedBox(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Today\'s Habits',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2D3436),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {},
+                      child: Text(
+                        'View All',
+                        style: TextStyle(
+                          color: Color(0xFF6C5CE7),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: habits.length,
+                  itemBuilder: (context, index) {
+                    return buildHabitCard(habits[index], context, ref);
+                  },
+                ),
+                SizedBox(height: 100), // Space for FAB
+              ],
+            ),
+          );
   }
 
   Widget _buildStatsCards(WidgetRef ref) {

@@ -5,16 +5,25 @@ import 'package:assignment/providers/complete_list_provider.dart';
 import 'package:assignment/providers/habit_service_repo_provider.dart';
 import 'package:assignment/providers/local_storage_specific_providers/local_progress_storage_class_provider.dart';
 import 'package:assignment/providers/local_storage_specific_providers/local_store_provider.dart';
-import 'package:assignment/ui/widgets/habit_detail_screen_widgets/build_activityItem.dart';
+import 'package:assignment/ui/widgets/habit_detail_screen_widgets/activity_list.dart';
 import 'package:assignment/ui/widgets/habit_detail_screen_widgets/show_complete_dialogue.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 class HabitDetailScreen extends ConsumerStatefulWidget {
   const HabitDetailScreen({super.key});
 
   @override
   ConsumerState<HabitDetailScreen> createState() => _HabitDetailScreenState();
+}
+
+//this function will make the complete button ignore/notignore if today's taks is already marked done
+bool iscompleteToday(WidgetRef ref, int id) {
+  return ref
+      .read(completelistprovider)
+      .getcompletehabitlist(id)
+      .contains(DateFormat('yyyy-MM-dd').format(DateTime.now()));
 }
 
 class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
@@ -37,13 +46,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
             ),
           );
 
-    final completedDates = ref
-        .read(completelistprovider)
-        .getcompletehabitlist(habit.habit.id);
-    final missedDates = ref
-        .read(completelistprovider)
-        .getmissinghabtilist(habit.habit.id);
-    progress = HabitProgress(completed: completedDates, missed: missedDates);
+    progress = HabitProgress(ref: ref);
   }
 
   @override
@@ -128,22 +131,27 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
                             ),
                             SizedBox(height: 32),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                _buildStatItem(
-                                  'Streak',
-                                  '${progress.streak}',
-                                  'days',
+                                Expanded(
+                                  child: _buildStatItem(
+                                    'Streak',
+                                    '${progress.streak(habit.habit.id)}',
+                                    'days',
+                                  ),
                                 ),
-                                _buildStatItem(
-                                  'Progress',
-                                  '${(progress.progress)}',
-                                  '%',
+                                Expanded(
+                                  child: _buildStatItem(
+                                    'Progress',
+                                    '${progress.progress(habit.habit.id)}',
+                                    '%',
+                                  ),
                                 ),
-                                _buildStatItem(
-                                  'Category',
-                                  habit.habit.category.name,
-                                  '',
+                                Expanded(
+                                  child: _buildStatItem(
+                                    'Category',
+                                    habit.habit.category.name,
+                                    '',
+                                  ),
                                 ),
                               ],
                             ),
@@ -173,56 +181,79 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
                                   ),
                                 ),
                                 SizedBox(height: 20),
-                                _buildActivityList(),
+                                ActivityList(),
                                 Spacer(),
-                                Container(
+                                SizedBox(
                                   width: double.infinity,
                                   height: 56,
-                                  child: ElevatedButton(
-                                    onPressed: () async {
-                                      //updating the progress object
-                                      await ref
-                                          .watch(localProgressProvider)
-                                          .saveUpdateProgress(
-                                            habit.habit.id,
-                                            ref,
-                                          );
-                                      //updating the habit object
-                                      habit.habit = habit.habit.copyWith(
-                                        completedToday: true,
-                                        streak: progress.streak,
-                                      );
-                                      //storing updated habit object locally
-                                      await ref
-                                          .watch(localStoreProvider)
-                                          .saveHabit(habit.habit);
-                                      //sending the updated object to backend
-                                      try {
-                                        await ref
-                                            .watch(habitRepoProvider)
-                                            .completeHabit(
-                                              habit.habit.id.toString(),
-                                            );
-                                        print("saved the updated habit ");
-                                      } catch (e) {
-                                        print(e);
-                                      }
-                                      // FIXED: Show the dialogue properly
-                                      ShowCompleteDialogue.show(context);
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: habit.color,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      elevation: 0,
+                                  child: IgnorePointer(
+                                    // ignoringSemantics: ,
+                                    ignoring: iscompleteToday(
+                                      ref,
+                                      habit.habit.id,
                                     ),
-                                    child: Text(
-                                      'Mark as Complete',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white,
+                                    child: ElevatedButton(
+                                      onPressed: () async {
+                                        // updating the progress object
+                                        await ref
+                                            .watch(localProgressProvider)
+                                            .saveUpdateProgress(
+                                              habit.habit.id,
+                                              ref,
+                                            );
+
+                                        // updating the habit object
+                                        habit.habit = habit.habit.copyWith(
+                                          completedToday: true,
+                                          streak: progress.streak(
+                                            habit.habit.id,
+                                          ),
+                                        );
+
+                                        // storing updated habit object locally
+                                        await ref
+                                            .watch(localStoreProvider)
+                                            .saveHabit(habit.habit);
+
+                                        // sending the updated object to backend
+                                        try {
+                                          await ref
+                                              .watch(habitRepoProvider)
+                                              .completeHabit(
+                                                habit.habit.id.toString(),
+                                              );
+                                        } catch (_) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              duration: Duration(seconds: 2),
+                                              content: Text(
+                                                "Could not sync progress with server. Saved locally.",
+                                              ),
+                                            ),
+                                          );
+                                        }
+
+                                        // show the dialogue properly
+                                        ShowCompleteDialogue.show(context);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: habit.color,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                        elevation: 0,
+                                      ),
+                                      child: Text(
+                                        'Mark as Complete',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -262,37 +293,6 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
         Text(
           label,
           style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.8)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActivityList() {
-    return Column(
-      children: [
-        BuildActivityitem(
-          status: 'Completed',
-          time: 'Today at 7:00 AM',
-          icon: Icons.check_circle,
-          color: Color(0xFF00B894),
-        ),
-        BuildActivityitem(
-          status: 'Completed',
-          time: 'Yesterday at 7:15 AM',
-          icon: Icons.check_circle,
-          color: Color(0xFF00B894),
-        ),
-        BuildActivityitem(
-          status: 'Missed',
-          time: '2 days ago',
-          icon: Icons.cancel,
-          color: Color(0xFFE17055),
-        ),
-        BuildActivityitem(
-          status: 'Completed',
-          time: '3 days ago at 6:45 AM',
-          icon: Icons.check_circle,
-          color: Color(0xFF00B894),
         ),
       ],
     );

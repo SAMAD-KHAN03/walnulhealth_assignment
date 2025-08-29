@@ -27,7 +27,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     try {
       profile = await ref.read(profileprovider).fetchprofile();
     } catch (e) {
-      print('Error loading profile: $e');
+      throw Exception(e);
     } finally {
       if (mounted) {
         setState(() {

@@ -203,11 +203,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 //   Navigator.pushReplacementNamed(context, '/dashboard');
                 // });
                 final authrepo = ref.read(authRepositoryProvider);
-                final User? user = await authrepo.login(ref);
-                if (user != null) {
-                  print(user);
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => DashboardScreen()),
+                try {
+                  final User? user = await authrepo.login(ref);
+
+                  if (user != null) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => DashboardScreen(),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        duration: Duration(seconds: 2),
+                        content: Text(
+                          "Oops... some error occurred during login",
+                        ),
+                      ),
+                    );
+                  }
+                } catch (e, st) {
+                  print("❌ Login failed: $e");
+                  print(st);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      duration: Duration(seconds: 2),
+                      content: Text("Login failed. Please try again."),
+                    ),
                   );
                 }
               },

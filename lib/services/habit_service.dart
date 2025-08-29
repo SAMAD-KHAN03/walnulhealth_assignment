@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:assignment/services/token_storage.dart';
 import 'package:dio/dio.dart';
 import '../models/habit.dart';
@@ -7,25 +6,56 @@ import '../models/habit.dart';
 class HabitService {
   final Dio dio;
   HabitService(this.dio);
-
   Future<List<Habit>> fetchHabits() async {
-    final token = await TokenStorage.getToken();
-    final res = await dio.get(
-      '/habits',
-      options: Options(headers: {"token": token}),
-    );
-    final list = (res.data as List).map((e) => Habit.fromJson(e)).toList();
-    print("fetched list of habits $list");
-    return list;
+    try {
+      final token = await TokenStorage.getToken();
+      if (token == null) throw Exception("No auth token found");
+
+      final res = await dio.get(
+        '/habits',
+        options: Options(headers: {"token": token}),
+      );
+
+      if (res.statusCode == 200) {
+        final list = (res.data as List).map((e) => Habit.fromJson(e)).toList();
+        print("✅ fetched list of habits $list");
+        return list;
+      } else {
+        throw Exception("Fetch habits failed: ${res.statusCode}");
+      }
+    } on DioException catch (e) {
+      print("❌ fetchHabits Dio error: ${e.response?.data ?? e.message}");
+      rethrow;
+    } catch (e) {
+      print("❌ Unexpected fetchHabits error: $e");
+      rethrow;
+    }
   }
 
   Future<Habit> createHabit(Habit payload) async {
-    final res = await dio.post('/habits', data: payload.toJson());
+    try {
+      final token = await TokenStorage.getToken();
+      if (token == null) throw Exception("No auth token found");
 
-    // Ensure correct type
-      final data = res.data is String ? jsonDecode(res.data) : res.data;
+      final res = await dio.post(
+        '/habits',
+        data: payload.toJson(),
+        options: Options(headers: {"token": token}),
+      );
 
-    return Habit.fromJson(data as Map<String, dynamic>);
+      if (res.statusCode == 201 || res.statusCode == 200) {
+        final data = res.data is String ? jsonDecode(res.data) : res.data;
+        return Habit.fromJson(data as Map<String, dynamic>);
+      } else {
+        throw Exception("Create habit failed: ${res.statusCode}");
+      }
+    } on DioException catch (e) {
+      print(" createHabit Dio error: ${e.response?.data ?? e.message}");
+      rethrow;
+    } catch (e) {
+      print(" Unexpected createHabit error: $e");
+      rethrow;
+    }
   }
 
   Future<void> completeHabit(String habitId) async {
